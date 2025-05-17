@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Away - Smart Rental Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .notification-dot {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .auth-container {
+            background: linear-gradient(rgba(79, 70, 229, 0.9), rgba(124, 58, 237, 0.9)), 
+                        url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1473&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .tenant-view {
+            display: none;
+        }
+        .landlord-view {
+            display: none;
+        }
+        .admin-view {
+            display: none;
+        }
+        .active-view {
+            display: block;
+        }
+        .tab-active {
+            border-bottom: 3px solid #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Authentication Screen -->
+    <div id="authScreen" class="min-h-screen flex items-center justify-center auth-container">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-home text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">Rent Away</h1>
+                <p class="text-gray-600 mt-2">Smart rental management for landlords and tenants</p>
+            </div>
+            
+            <div id="authTabs" class="flex border-b mb-6">
+                <button id="loginTab" class="flex-1 py-2 font-medium text-gray-600 tab-active">Login</button>
+                <button id="registerTab" class="flex-1 py-2 font-medium text-gray-600">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="space-y-4">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="rememberMe" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                    </div>
+                    <a href="#" class="text-sm text-indigo-600 hover:underline">Forgot password?</a>
+                </div>
+                <button id="loginBtn" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition duration-300">
+                    Sign In
+                </button>
+                <div class="relative mt-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <button class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <i class="fab fa-google text-red-500 mr-2"></i>
+                        <span class="text-sm font-medium">Google</span>
+                    </button>
+                    <button class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <i class="fab fa-apple text-gray-800 mr-2"></i>
+                        <span class="text-sm font-medium">Apple</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Registration Form -->
+            <div id="registerForm" class="space-y-4 hidden">
+                <div>
+                    <label for="registerName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="registerName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="registerEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="registerPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="registerPhone" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="registerPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="registerConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="registerRole" class="block text-sm font-medium text-gray-700 mb-1">I am a</label>
+                    <select id="registerRole" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="tenant">Tenant</option>
+                        <option value="landlord">Landlord</option>
+                        <option value="admin">Rent Board Admin</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="termsAgreement" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="termsAgreement" class="ml-2 block text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-indigo-600 hover:underline">Terms</a> and <a href="#" class="text-indigo-600 hover:underline">Privacy Policy</a>
+                    </label>
+                </div>
+                <button id="registerBtn" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition duration-300">
+                    Create Account
+                </button>
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Already have an account? <button id="switchToLogin" class="text-indigo-600 hover:underline">Sign in</button>
+                </div>
+            </div>
+            
+            <!-- MFA Verification -->
+            <div id="mfaVerification" class="hidden">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Two-Factor Authentication</h2>
+                    <p class="text-gray-600 mt-2">Enter the 6-digit code sent to your email</p>
+                </div>
+                <div class="flex justify-between space-x-2 mb-6">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                    <input type="text" maxlength="1" class="w-12 h-12 text-center border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xl">
+                </div>
+                <button id="verifyMfaBtn" class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition duration-300">
+                    Verify
+                </button>
+                <div class="text-center mt-4">
+                    <button class="text-sm text-indigo-600 hover:underline">Resend Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (hidden initially) -->
+    <div id="appContainer" class="hidden">
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden fixed top-4 left-4 z-50">
+            <button id="menuToggle" class="p-2 rounded-md bg-white shadow-md">
+                <i class="fas fa-bars text-indigo-600"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar md:translate-x-0 bg-white w-64 fixed md:static h-screen shadow-md z-40">
+            <div class="p-4 flex items-center justify-between border-b">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white">
+                        <i class="fas fa-home text-xl"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-indigo-600">Rent Away</h1>
+                </div>
+                <button id="closeMenu" class="md:hidden p-1 rounded-full hover:bg-gray-100">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+            
+            <div class="p-4">
+                <div class="flex items-center space-x-3 p-3 rounded-lg bg-indigo-50">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium" id="userName">John Doe</p>
+                        <p class="text-xs text-gray-500" id="userRole">Landlord</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Landlord Navigation -->
+            <nav class="mt-4 landlord-view">
+                <div class="px-4 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dashboard</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-indigo-600 bg-indigo-50 font-medium overview-tab">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 payments-tab">
+                    <i class="fas fa-wallet w-5"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 properties-tab">
+                    <i class="fas fa-home w-5"></i>
+                    <span>Properties</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenants-tab">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Tenants</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 leases-tab">
+                    <i class="fas fa-file-contract w-5"></i>
+                    <span>Leases</span>
+                </a>
+                
+                <div class="px-4 mt-6 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 reminders-tab">
+                    <i class="fas fa-bell w-5"></i>
+                    <span>Reminders</span>
+                    <div class="notification-dot"></div>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 reports-tab">
+                    <i class="fas fa-file-invoice-dollar w-5"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 maintenance-tab">
+                    <i class="fas fa-tools w-5"></i>
+                    <span>Maintenance</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 messages-tab">
+                    <i class="fas fa-comment-alt w-5"></i>
+                    <span>Messages</span>
+                    <div class="notification-dot"></div>
+                </a>
+                
+                <div class="px-4 mt-6 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 account-tab">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Account</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 security-tab">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span>Security</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+            
+            <!-- Tenant Navigation -->
+            <nav class="mt-4 tenant-view">
+                <div class="px-4 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dashboard</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-indigo-600 bg-indigo-50 font-medium tenant-overview-tab">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-payments-tab">
+                    <i class="fas fa-wallet w-5"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-lease-tab">
+                    <i class="fas fa-file-contract w-5"></i>
+                    <span>My Lease</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-maintenance-tab">
+                    <i class="fas fa-tools w-5"></i>
+                    <span>Maintenance</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-messages-tab">
+                    <i class="fas fa-comment-alt w-5"></i>
+                    <span>Messages</span>
+                    <div class="notification-dot"></div>
+                </a>
+                
+                <div class="px-4 mt-6 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-account-tab">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Account</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 tenant-security-tab">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span>Security</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50" id="tenantLogoutBtn">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+            
+            <!-- Admin Navigation -->
+            <nav class="mt-4 admin-view">
+                <div class="px-4 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dashboard</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-indigo-600 bg-indigo-50 font-medium admin-overview-tab">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-properties-tab">
+                    <i class="fas fa-home w-5"></i>
+                    <span>Properties</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-tenants-tab">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Tenants</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-disputes-tab">
+                    <i class="fas fa-gavel w-5"></i>
+                    <span>Disputes</span>
+                    <div class="notification-dot"></div>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-reports-tab">
+                    <i class="fas fa-file-invoice-dollar w-5"></i>
+                    <span>Reports</span>
+                </a>
+                
+                <div class="px-4 mt-6 mb-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
+                </div>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-account-tab">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Account</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 admin-security-tab">
+                    <i class="fas fa-shield-alt w-5"></i>
+                    <span>Security</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50" id="adminLogoutBtn">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:ml-64">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-xl font-semibold text-gray-800" id="pageTitle">Dashboard Overview</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="p-2 rounded-full hover:bg-gray-100">
+                                <i class="fas fa-bell text-gray-600"></i>
+                                <div class="notification-dot"></div>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button class="p-2 rounded-full hover:bg-gray-100">
+                                <i class="fas fa-envelope text-gray-600"></i>
+                                <div class="notification-dot"></div>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span class="hidden md:inline font-medium" id="topUserName">John Doe</span>
+                                <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                            </button>
+                            <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">Your Profile</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">Settings</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50" id="topLogoutBtn">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="p-4 md:p-6">
+                <!-- Landlord View -->
+                <div id="landlordView" class="landlord-view">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Total Properties</p>
+                                    <p class="text-2xl font-bold mt-1">12</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-indigo-50 text-indigo-600">
+                                    <i class="fas fa-home text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">+2 this month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Active Tenants</p>
+                                    <p class="text-2xl font-bold mt-1">24</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-green-50 text-green-600">
+                                    <i class="fas fa-users text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">+3 this month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Monthly Revenue</p>
+                                    <p class="text-2xl font-bold mt-1">$24,500</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-blue-50 text-blue-600">
+                                    <i class="fas fa-dollar-sign text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">+12% from last month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Pending Payments</p>
+                                    <p class="text-2xl font-bold mt-1">3</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-yellow-50 text-yellow-600">
+                                    <i class="fas fa-exclamation-circle text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-red-50 text-red-600">Due in 3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts and Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Payment Chart -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Payment History</h3>
+                                <select class="text-sm border border-gray-200 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                                    <option>Last 6 Months</option>
+                                    <option>Last Year</option>
+                                    <option>All Time</option>
+                                </select>
+                            </div>
+                            <div class="h-64">
+                                <!-- Chart placeholder -->
+                                <div class="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-chart-line text-4xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Recent Activity</h3>
+                                <a href="#" class="text-sm text-indigo-600 hover:underline">View All</a>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-green-50 text-green-600">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Payment Received</p>
+                                        <p class="text-xs text-gray-500">From Jane Smith for Apt 4B - $1,200</p>
+                                        <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-blue-50 text-blue-600">
+                                        <i class="fas fa-file-signature"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">New Lease Signed</p>
+                                        <p class="text-xs text-gray-500">123 Main St - Michael Johnson</p>
+                                        <p class="text-xs text-gray-400 mt-1">Yesterday</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-yellow-50 text-yellow-600">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Payment Reminder Sent</p>
+                                        <p class="text-xs text-gray-500">To Robert Davis for overdue rent</p>
+                                        <p class="text-xs text-gray-400 mt-1">2 days ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-indigo-50 text-indigo-600">
+                                        <i class="fas fa-tools"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Maintenance Request</p>
+                                        <p class="text-xs text-gray-500">Plumbing issue at 456 Oak Ave</p>
+                                        <p class="text-xs text-gray-400 mt-1">3 days ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Payments and Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Upcoming Payments -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Upcoming Payments</h3>
+                                <a href="#" class="text-sm text-indigo-600 hover:underline">View All</a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900">Sarah Williams</div>
+                                                        <div class="text-sm text-gray-500">sarah@example.com</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Apt 3C</div>
+                                                <div class="text-sm text-gray-500">789 Pine St</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                $1,250
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                May 5, 2023
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    On Time
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Send Reminder</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text Indigo-600">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900">Robert Davis</div>
+                                                        <div class="text-sm text-gray-500">robert@example.com</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Unit 12</div>
+                                                <div class="text-sm text-gray-500">101 Maple Ave</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                $950
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                May 1, 2023
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Due Soon
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Send Reminder</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900">Michael Brown</div>
+                                                        <div class="text-sm text-gray-500">michael@example.com</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Apt 2A</div>
+                                                <div class="text-sm text-gray-500">456 Oak St</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                $1,100
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                Apr 28, 2023
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Overdue
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Send Notice</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-indigo-100 text-indigo-600">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Add New Property</span>
+                                </button>
+                                
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-green-100 text-green-600">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Add New Tenant</span>
+                                </button>
+                                
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-blue-100 text-blue-600">
+                                        <i class="fas fa-file-contract"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Create Lease Agreement</span>
+                                </button>
+                                
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-purple-100 text-purple-600">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Generate Report</span>
+                                </button>
+                                
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-yellow-100 text-yellow-600">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Send Bulk Reminders</span>
+                                </button>
+                                
+                                <button class="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition">
+                                    <div class="p-2 rounded-full bg-red-100 text-red-600">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <span class="text-sm font-medium">Report to Rent Board</span>
+                                </button>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h4 class="text-sm font-medium text-gray-500 mb-2">Need Help?</h4>
+                                <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
+                                    <div class="p-2 rounded-full bg-indigo-100 text-indigo-600">
+                                        <i class="fas fa-question-circle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Contact Support</p>
+                                        <p class="text-xs text-gray-500">We're here to help 24/7</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tenant View -->
+                <div id="tenantView" class="tenant-view">
+                    <!-- Tenant Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Current Rent</p>
+                                    <p class="text-2xl font-bold mt-1">$1,250</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-indigo-50 text-indigo-600">
+                                    <i class="fas fa-home text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">Due in 5 days</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Payment History</p>
+                                    <p class="text-2xl font-bold mt-1">12/12</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-green-50 text-green-600">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">100% on time</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Lease End Date</p>
+                                    <p class="text-2xl font-bold mt-1">May 15, 2024</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-blue-50 text-blue-600">
+                                    <i class="fas fa-calendar-alt text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600">11 months remaining</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tenant Payment and Lease Info -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Make Payment -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Make Payment</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">$</span>
+                                        </div>
+                                        <input type="text" value="1,250.00" class="pl-7 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                                    <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option>Credit/Debit Card</option>
+                                        <option>Bank Transfer</option>
+                                        <option>Mobile Wallet</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+                                        <input type="text" placeholder="1234 5678 9012 3456" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                                        <input type="text" placeholder="MM/YY" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                                        <input type="text" placeholder="123" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
+                                        <input type="text" placeholder="12345" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                </div>
+                                <button class="w-full gradient-bg text-white py-2 px-4 rounded-lg hover:opacity-90 transition duration-300">
+                                    Pay $1,250.00
+                                </button>
+                                <div class="flex items-center justify-center space-x-2">
+                                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/visa/visa-original.svg" class="h-8" alt="Visa">
+                                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mastercard/mastercard-original.svg" class="h-8" alt="Mastercard">
+                                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg" class="h-8" alt="Apple Pay">
+                                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/paypal/paypal-original.svg" class="h-8" alt="PayPal">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lease Summary -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Lease Summary</h3>
+                                <button class="text-sm text-indigo-600 hover:underline">View Full Lease</button>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Property</span>
+                                    <span class="text-sm font-medium">Apt 3B, 789 Pine St</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Landlord</span>
+                                    <span class="text-sm font-medium">John Smith</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Lease Start</span>
+                                    <span class="text-sm font-medium">May 15, 2023</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Lease End</span>
+                                    <span class="text-sm font-medium">May 15, 2024</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Monthly Rent</span>
+                                    <span class="text-sm font-medium">$1,250</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Security Deposit</span>
+                                    <span class="text-sm font-medium">$1,250</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Late Fee</span>
+                                    <span class="text-sm font-medium">$50 after 5 days</span>
+                                </div>
+                                <div class="pt-4 mt-4 border-t border-gray-200">
+                                    <button class="w-full flex items-center justify-center space-x-2 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                        <i class="fas fa-file-download text-indigo-600"></i>
+                                        <span class="text-sm font-medium">Download Lease PDF</span>
+                                    </button>
+                                </div>
+                                <div class="pt-2">
+                                    <button class="w-full flex items-center justify-center space-x-2 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                        <i class="fas fa-envelope text-indigo-600"></i>
+                                        <span class="text-sm font-medium">Message Landlord</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment History -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">Payment History</h3>
+                            <button class="text-sm text-indigo-600 hover:underline">Export as PDF</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Apr 15, 2023
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            $1,250.00
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Credit Card
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Paid
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Mar 15, 2023
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            $1,250.00
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Bank Transfer
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Paid
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Feb 15, 2023
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            $1,250.00
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Mobile Wallet
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Paid
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Maintenance Requests -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">Maintenance Requests</h3>
+                            <button class="text-sm text-indigo-600 hover:underline">New Request</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <p class="font-medium">Plumbing Issue - Kitchen Sink</p>
+                                        <p class="text-sm text-gray-500">Submitted: Apr 5, 2023</p>
+                                    </div>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Completed
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2">Kitchen sink is leaking and water pressure is low. Need plumber to check pipes.</p>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <p class="font-medium">Broken Window - Bedroom</p>
+                                        <p class="text-sm text-gray-500">Submitted: Mar 20, 2023</p>
+                                    </div>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        In Progress
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2">Window in bedroom won't close properly and lets in cold air.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin View -->
+                <div id="adminView" class="admin-view">
+                    <!-- Admin Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Registered Properties</p>
+                                    <p class="text-2xl font-bold mt-1">1,245</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-indigo-50 text-indigo-600">
+                                    <i class="fas fa-home text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">+45 this month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Active Tenants</p>
+                                    <p class="text-2xl font-bold mt-1">2,890</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-green-50 text-green-600">
+                                    <i class="fas fa-users text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">+120 this month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Open Disputes</p>
+                                    <p class="text-2xl font-bold mt-1">24</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-red-50 text-red-600">
+                                    <i class="fas fa-gavel text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-red-50 text-red-600">+5 this week</span>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Overdue Payments</p>
+                                    <p class="text-2xl font-bold mt-1">156</p>
+                                </div>
+                                <div class="p-3 rounded-full bg-yellow-50 text-yellow-600">
+                                    <i class="fas fa-exclamation-circle text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-yellow-50 text-yellow-600">12% of total</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Disputes and Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Disputes -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Recent Disputes</h3>
+                                <a href="#" class="text-sm text-indigo-600 hover:underline">View All</a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Case #</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parties</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                #DIS-2023-045
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Smith (LL) vs. Johnson (T)</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                123 Main St, Apt 2B
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                Security Deposit
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    In Review
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Review</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                #DIS-2023-044
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Williams (LL) vs. Davis (T)</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                456 Oak Ave, Unit 5
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                Rent Increase
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Mediation
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Schedule</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                #DIS-2023-043
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">Brown (LL) vs. Miller (T)</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                789 Pine St, Apt 3C
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                Maintenance
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Resolved
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">Recent Activity</h3>
+                                <a href="#" class="text-sm text-indigo-600 hover:underline">View All</a>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-indigo-50 text-indigo-600">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">New Property Registered</p>
+                                        <p class="text-xs text-gray-500">101 Maple Ave by Smith Properties</p>
+                                        <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-red-50 text-red-600">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Overdue Payment Reported</p>
+                                        <p class="text-xs text-gray-500">Tenant Davis at 456 Oak Ave</p>
+                                        <p class="text-xs text-gray-400 mt-1">Yesterday</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="p-2 rounded-full bg-blue-50 text-blue-600">
+                                        <i class="fas fa-gavel"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium">Dispute Opened</p>
+                                       
+</html>
